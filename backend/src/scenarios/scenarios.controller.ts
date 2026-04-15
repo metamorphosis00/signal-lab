@@ -1,13 +1,17 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ScenariosService } from './scenarios.service';
 
-@Controller('scenarios')
+@Controller('api/scenarios')
 export class ScenariosController {
     constructor(private readonly scenariosService: ScenariosService) {}
 
     @Post('run')
-    async runScenario(@Body() body: { scenarioName: string }) {
-        return this.scenariosService.runScenario(body.scenarioName);
+    @HttpCode(HttpStatus.OK)
+    async runScenario(@Body() body: { type: string; name?: string }) {
+        if (body.type === 'teapot') {
+            return { signal: 42, message: "I'm a teapot" };
+        }
+        return this.scenariosService.runScenario(body.type, body.name);
     }
 
     @Get('history')

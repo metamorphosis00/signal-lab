@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import * as Sentry from '@sentry/node';
 import { Counter, Histogram } from 'prom-client';
@@ -8,58 +8,77 @@ export class ScenariosService {
     private readonly logger = new Logger(ScenariosService.name);
 
     private scenarioCounter = new Counter({
-        name: 'signal_lab_scenario_runs_total',
+        name: 'scenario_runs_total',
         help: 'Total number of scenario runs',
-        labelNames: ['scenario', 'status'],
+        labelNames: ['type', 'status'],
     });
 
     private scenarioDuration = new Histogram({
-        name: 'signal_lab_scenario_duration_ms',
-        help: 'Scenario duration in milliseconds',
-        labelNames: ['scenario'],
-        buckets: [10, 50, 100, 500, 1000, 2000, 5000],
+        name: 'scenario_run_duration_seconds',
+        help: 'Scenario duration in seconds',
+        labelNames: ['type'],
+        buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5],
     });
 
     constructor(private prisma: PrismaService) {}
 
-    async runScenario(scenarioName: string) {
+    async runScenario(type: string, name?: string) {
         const startTime = Date.now();
-        let status = 'success';
+        let status = 'completed';
         let error: string | null = null;
+        let metadata: object | null = null;
 
         try {
-            if (scenarioName === 'system_error') {
-                throw new Error('Simulated system error for observability demo');
+            if (type === 'validation_error') {
+                this.logger.warn(`Validation error scenario triggered`, { type, name });
+                throw new BadRequestException('Invalid scenario input: validation failed');
             }
 
-            if (scenarioName === 'high_load') {
-                await this.simulateHighLoad();
+            if (type === 'system_error') {
+                throw new InternalServerErrorException('Simulated system error for observability demo');
             }
 
-            if (scenarioName === 'slow_query') {
-                await this.simulateSlowQuery();
+            if (type === 'slow_request') {
+                const delay = Math.floor(Math.random() * 3000) + 2000;
+                await this.simulateSlowRequest(delay);
+                this.logger.warn(`Slow request scenario completed`, { type, delay });
             }
 
-            this.logger.log(`Scenario ${scenarioName} completed successfully`);
+            if (type === 'teapot') {
+                metadata = { easter: true };
+                this.logger.log(`Teapot scenario triggered`, { type });
+            }
+
+            if (type === 'success') {
+                this.logger.log(`Success scenario completed`, { type, name });
+            }
+
         } catch (err) {
-            status = 'error';
+            if (err instanceof BadRequestException) {
+                throw err;
+            }
+            status = 'failed';
             error = err.message;
-            this.logger.error(`Scenario ${scenarioName} failed: ${err.message}`);
+            this.logger.error(`Scenario failed: ${err.message}`, { type, name });
             Sentry.captureException(err);
+
+            const duration = (Date.now() - startTime) / 1000;
+            this.scenarioCounter.inc({ type, status: 'error' });
+            this.scenarioDuration.observe({ type }, duration);
+
+            await this.prisma.scenarioRun.create({
+                data: { type, status, duration: Date.now() - startTime, error, metadata: metadata ?? undefined },
+            });
+
+            throw err;
         }
 
         const duration = Date.now() - startTime;
-
-        this.scenarioCounter.inc({ scenario: scenarioName, status });
-        this.scenarioDuration.observe({ scenario: scenarioName }, duration);
+        this.scenarioCounter.inc({ type, status: 'completed' });
+        this.scenarioDuration.observe({ type }, duration / 1000);
 
         const run = await this.prisma.scenarioRun.create({
-            data: {
-                scenarioName,
-                status,
-                duration,
-                error,
-            },
+            data: { type, status, duration, error, metadata: metadata ?? undefined },
         });
 
         return run;
@@ -72,16 +91,7 @@ export class ScenariosService {
         });
     }
 
-    private async simulateHighLoad() {
-        let result = 0;
-        for (let i = 0; i < 10_000_000; i++) {
-            result += Math.sqrt(i);
-        }
-        this.logger.log(`High load simulation done, result: ${result}`);
-    }
-
-    private async simulateSlowQuery() {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        this.logger.log('Slow query simulation done');
+    private async simulateSlowRequest(delay: number) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
     }
 }
