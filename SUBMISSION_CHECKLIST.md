@@ -61,25 +61,22 @@
 git clone https://github.com/metamorphosis00/signal-lab
 cd signal-lab
 
-# Запустить инфраструктуру
+# Создать env файл и добавить SENTRY_DSN
+cp .env.example .env
+
+# Запустить все сервисы одной командой
 docker compose up -d
-
-# Запустить backend
-cd backend && npm install && npm run start:dev
-
-# Запустить frontend (новый терминал)
-cd frontend && npm install && npm run dev
 ```
 
 Проверка:
-1. http://localhost:3001 — UI загружен
+1. http://localhost:3000 — UI загружен
 2. Выбрать "success" → Run → зелёный badge в истории
 3. Выбрать "system_error" → Run → красный badge + toast
-4. http://localhost:3000/metrics — видеть scenario_runs_total
+4. http://localhost:3001/metrics — видеть scenario_runs_total
 5. http://localhost:3003 — Grafana dashboard с графиками
 6. Grafana → Explore → Loki: `{job="signal-lab"}` → логи
 7. sentry.io → Issues → ошибка от system_error
-8. http://localhost:3000/api/docs → Swagger
+8. http://localhost:3001/api/docs → Swagger
 
 ---
 
@@ -94,4 +91,4 @@ cd frontend && npm install && npm run dev
 ### Технические решения
 - Prisma 5 вместо 7 — из-за изменений API в v7
 - Winston-loki для отправки логов напрямую без Promtail
-- Frontend на порту 3001 (3000 занят backend)
+- Frontend на порту 3000, backend на 3001 (для соответствия assignment flow)
