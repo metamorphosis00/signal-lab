@@ -10,7 +10,7 @@
 
 - [x] `docker compose up -d` поднимает всё без ошибок
 - [x] `GET /api/health` возвращает 200
-- [x] Frontend открывается в браузере (localhost:3001)
+- [x] Frontend открывается в браузере (localhost:3000)
 - [x] Prisma schema содержит модель ScenarioRun с миграцией
 - [x] Использованы все обязательные frontend библиотеки
 - [x] README достаточен для запуска за 3 минуты
