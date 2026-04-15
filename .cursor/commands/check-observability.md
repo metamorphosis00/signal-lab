@@ -11,31 +11,45 @@ check-observability
 
 ## Шаги проверки
 
-### 1. Проверь backend
+### 1. Проверь health endpoint
 ```bash
-curl http://localhost:3000/scenarios/history
+curl http://localhost:3001/api/health
+```
+Ожидаем: `{ "status": "ok", "timestamp": "..." }`
+
+### 2. Проверь историю запусков
+```bash
+curl http://localhost:3001/api/scenarios/history
 ```
 Ожидаем: JSON массив с историей запусков
 
-### 2. Проверь Prometheus метрики
+### 3. Проверь Prometheus метрики
 ```bash
-curl http://localhost:3000/metrics | grep signal_lab
+curl http://localhost:3001/metrics | grep scenario
 ```
-Ожидаем: signal_lab_scenario_runs_total с числами
+Ожидаем: scenario_runs_total с числами
 
-### 3. Запусти тестовый сценарий
+### 4. Запусти тестовый сценарий
 ```bash
-curl -X POST http://localhost:3000/scenarios/run \
+curl -X POST http://localhost:3001/api/scenarios/run \
   -H "Content-Type: application/json" \
-  -d '{"scenarioName": "system_error"}'
+  -d '{"type": "system_error"}'
 ```
-Ожидаем: JSON с status: "error"
+Ожидаем: JSON с statusCode: 500
 
-### 4. Проверь Sentry
+### 5. Проверь teapot
+```bash
+curl -X POST http://localhost:3001/api/scenarios/run \
+  -H "Content-Type: application/json" \
+  -d '{"type": "teapot"}'
+```
+Ожидаем: HTTP 418 с `{ "signal": 42, "message": "I'm a teapot" }`
+
+### 6. Проверь Sentry
 Открой https://sentry.io и проверь Issues
 Ожидаем: новая ошибка "Simulated system error"
 
-### 5. Проверь Grafana (после docker compose up)
+### 7. Проверь Grafana
 Открой http://localhost:3003
 Ожидаем: dashboard с метриками
 

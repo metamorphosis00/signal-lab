@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { ScenariosService } from './scenarios.service';
 
 @Controller('api/scenarios')
@@ -6,12 +7,12 @@ export class ScenariosController {
     constructor(private readonly scenariosService: ScenariosService) {}
 
     @Post('run')
-    @HttpCode(HttpStatus.OK)
-    async runScenario(@Body() body: { type: string; name?: string }) {
+    async runScenario(@Body() body: { type: string; name?: string }, @Res() res: Response) {
         if (body.type === 'teapot') {
-            return { signal: 42, message: "I'm a teapot" };
+            return res.status(418).json({ signal: 42, message: "I'm a teapot" });
         }
-        return this.scenariosService.runScenario(body.type, body.name);
+        const result = await this.scenariosService.runScenario(body.type, body.name);
+        return res.status(200).json(result);
     }
 
     @Get('history')
