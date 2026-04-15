@@ -21,9 +21,6 @@ build/
 # OS
 .DS_Store
 
-# Prisma
-backend/prisma/migrations/
-
 # Docker
 postgres_data/
 grafana_data/
