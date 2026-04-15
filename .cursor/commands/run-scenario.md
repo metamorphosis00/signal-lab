@@ -11,33 +11,40 @@ run-scenario
 
 ## Команды
 
-### Запустить high_load
+### Запустить success
 ```bash
-curl -X POST http://localhost:3000/scenarios/run \
+curl -X POST http://localhost:3000/api/scenarios/run \
   -H "Content-Type: application/json" \
-  -d '{"scenarioName": "high_load"}'
+  -d '{"type": "success"}'
 ```
 
 ### Запустить system_error
 ```bash
-curl -X POST http://localhost:3000/scenarios/run \
+curl -X POST http://localhost:3000/api/scenarios/run \
   -H "Content-Type: application/json" \
-  -d '{"scenarioName": "system_error"}'
+  -d '{"type": "system_error"}'
 ```
 
-### Запустить slow_query
+### Запустить slow_request
 ```bash
-curl -X POST http://localhost:3000/scenarios/run \
+curl -X POST http://localhost:3000/api/scenarios/run \
   -H "Content-Type: application/json" \
-  -d '{"scenarioName": "slow_query"}'
+  -d '{"type": "slow_request"}'
+```
+
+### Запустить validation_error
+```bash
+curl -X POST http://localhost:3000/api/scenarios/run \
+  -H "Content-Type: application/json" \
+  -d '{"type": "validation_error"}'
 ```
 
 ### Посмотреть историю
 ```bash
-curl http://localhost:3000/scenarios/history
+curl http://localhost:3000/api/scenarios/history
 ```
 
 ### Посмотреть метрики
 ```bash
-curl http://localhost:3000/metrics | grep signal_lab
+curl http://localhost:3000/metrics | grep scenario
 ```
