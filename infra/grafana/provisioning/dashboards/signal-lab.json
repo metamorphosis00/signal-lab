@@ -1,0 +1,61 @@
+{
+  "title": "Signal Lab",
+  "uid": "signal-lab",
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Scenario Runs Total",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(signal_lab_scenario_runs_total)",
+          "legendFormat": "Total Runs"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Runs by Scenario",
+      "type": "bargauge",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "signal_lab_scenario_runs_total",
+          "legendFormat": "{{scenario}} - {{status}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Scenario Duration (ms)",
+      "type": "graph",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "signal_lab_scenario_duration_ms_sum / signal_lab_scenario_duration_ms_count",
+          "legendFormat": "{{scenario}} avg duration"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Logs",
+      "type": "logs",
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "datasource": "Loki",
+          "expr": "{job=\"signal-lab\"}"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "10s"
+}
